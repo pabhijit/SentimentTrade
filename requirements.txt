@@ -9,3 +9,20 @@ python-dotenv
 pandas
 requests
 yfinance
+
+# Enhanced API and Database
+fastapi
+uvicorn
+sqlalchemy
+passlib
+pyjwt
+bcrypt
+pydantic
+
+# Backtesting and Analysis
+matplotlib
+seaborn
+scipy
+
+# Optional: For advanced technical analysis
+# talib  # Uncomment if you want to install TA-Lib
