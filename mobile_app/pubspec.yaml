@@ -1,0 +1,46 @@
+name: sentiment_trade
+description: Smart Trading Signals Mobile App
+
+publish_to: 'none'
+
+version: 2.0.0+1
+
+environment:
+  sdk: '>=2.19.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # HTTP client for API calls
+  http: ^1.1.0
+  
+  # Local storage for authentication tokens
+  shared_preferences: ^2.2.2
+  
+  # Icons
+  cupertino_icons: ^1.0.2
+  
+  # Charts for backtesting results
+  fl_chart: ^0.64.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # App icons and assets
+  assets:
+    - assets/images/
+    - assets/icons/
+  
+  # Custom fonts (optional)
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: fonts/Roboto-Regular.ttf
+  #       - asset: fonts/Roboto-Bold.ttf
+  #         weight: 700

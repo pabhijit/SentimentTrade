@@ -1,0 +1,234 @@
+{
+  "SPY": {
+    "best_parameters": {
+      "sentiment_style": "contrarian",
+      "min_confidence": 0.1
+    },
+    "best_result": {
+      "parameters": {
+        "sentiment_style": "contrarian",
+        "min_confidence": 0.1
+      },
+      "total_return": 383.8265315183992,
+      "annualized_return": 5.181418003851435,
+      "sharpe_ratio": 0.4220721928246057,
+      "max_drawdown": 27.89532467776745,
+      "win_rate": 53.669724770642205,
+      "total_trades": 218,
+      "avg_pnl_per_trade": 2160.1001449541277,
+      "final_value": 483826.53151839913,
+      "signals_generated": 7839,
+      "buy_signals": 2162,
+      "sell_signals": 1450,
+      "years": 31.208761122518823
+    },
+    "top_5_results": [
+      {
+        "parameters": {
+          "sentiment_style": "contrarian",
+          "min_confidence": 0.1
+        },
+        "total_return": 383.8265315183992,
+        "annualized_return": 5.181418003851435,
+        "sharpe_ratio": 0.4220721928246057,
+        "max_drawdown": 27.89532467776745,
+        "win_rate": 53.669724770642205,
+        "total_trades": 218,
+        "avg_pnl_per_trade": 2160.1001449541277,
+        "final_value": 483826.53151839913,
+        "signals_generated": 7839,
+        "buy_signals": 2162,
+        "sell_signals": 1450,
+        "years": 31.208761122518823
+      },
+      {
+        "parameters": {
+          "sentiment_style": "contrarian",
+          "min_confidence": 0.08
+        },
+        "total_return": 295.56328578220007,
+        "annualized_return": 4.504782122503159,
+        "sharpe_ratio": 0.3157292267141611,
+        "max_drawdown": 41.73163797632008,
+        "win_rate": 58.333333333333336,
+        "total_trades": 312,
+        "avg_pnl_per_trade": 1401.873577564103,
+        "final_value": 395563.28578220005,
+        "signals_generated": 7839,
+        "buy_signals": 3462,
+        "sell_signals": 2424,
+        "years": 31.208761122518823
+      },
+      {
+        "parameters": {
+          "sentiment_style": "momentum",
+          "min_confidence": 0.05
+        },
+        "total_return": 269.73838129629956,
+        "annualized_return": 4.278947281989809,
+        "sharpe_ratio": 0.3409524983597512,
+        "max_drawdown": 39.03832030217097,
+        "win_rate": 61.24661246612466,
+        "total_trades": 369,
+        "avg_pnl_per_trade": 1122.7086121951213,
+        "final_value": 369738.3812962996,
+        "signals_generated": 7839,
+        "buy_signals": 4384,
+        "sell_signals": 3199,
+        "years": 31.208761122518823
+      },
+      {
+        "parameters": {
+          "sentiment_style": "momentum",
+          "min_confidence": 0.08
+        },
+        "total_return": 239.8704266463999,
+        "annualized_return": 3.9978819264454346,
+        "sharpe_ratio": 0.3140811498021966,
+        "max_drawdown": 36.32309983142162,
+        "win_rate": 57.801418439716315,
+        "total_trades": 282,
+        "avg_pnl_per_trade": 1253.4941141843972,
+        "final_value": 339870.4266463999,
+        "signals_generated": 7839,
+        "buy_signals": 3407,
+        "sell_signals": 2346,
+        "years": 31.208761122518823
+      },
+      {
+        "parameters": {
+          "sentiment_style": "realistic",
+          "min_confidence": 0.1
+        },
+        "total_return": 222.4822740641,
+        "annualized_return": 3.8230275372807876,
+        "sharpe_ratio": 0.32066210732248546,
+        "max_drawdown": 34.14858505854677,
+        "win_rate": 56.10859728506787,
+        "total_trades": 221,
+        "avg_pnl_per_trade": 1324.4885135746604,
+        "final_value": 322482.2740641,
+        "signals_generated": 7839,
+        "buy_signals": 2322,
+        "sell_signals": 1550,
+        "years": 31.208761122518823
+      }
+    ]
+  },
+  "QQQ": {
+    "best_parameters": {
+      "sentiment_style": "contrarian",
+      "min_confidence": 0.1
+    },
+    "best_result": {
+      "parameters": {
+        "sentiment_style": "contrarian",
+        "min_confidence": 0.1
+      },
+      "total_return": 126.14715225289999,
+      "annualized_return": 3.304400503130256,
+      "sharpe_ratio": 0.23122523233834963,
+      "max_drawdown": 70.13230650589999,
+      "win_rate": 52.77777777777778,
+      "total_trades": 180,
+      "avg_pnl_per_trade": 874.6034972222211,
+      "final_value": 226147.15225289998,
+      "signals_generated": 6297,
+      "buy_signals": 1656,
+      "sell_signals": 1203,
+      "years": 25.100616016427104
+    },
+    "top_5_results": [
+      {
+        "parameters": {
+          "sentiment_style": "contrarian",
+          "min_confidence": 0.1
+        },
+        "total_return": 126.14715225289999,
+        "annualized_return": 3.304400503130256,
+        "sharpe_ratio": 0.23122523233834963,
+        "max_drawdown": 70.13230650589999,
+        "win_rate": 52.77777777777778,
+        "total_trades": 180,
+        "avg_pnl_per_trade": 874.6034972222211,
+        "final_value": 226147.15225289998,
+        "signals_generated": 6297,
+        "buy_signals": 1656,
+        "sell_signals": 1203,
+        "years": 25.100616016427104
+      },
+      {
+        "parameters": {
+          "sentiment_style": "momentum",
+          "min_confidence": 0.1
+        },
+        "total_return": 125.38358438949993,
+        "annualized_return": 3.2904818915486356,
+        "sharpe_ratio": 0.22358868869087858,
+        "max_drawdown": 74.1535863919071,
+        "win_rate": 50.306748466257666,
+        "total_trades": 163,
+        "avg_pnl_per_trade": 939.7677147239258,
+        "final_value": 225383.5843894999,
+        "signals_generated": 6297,
+        "buy_signals": 1594,
+        "sell_signals": 1206,
+        "years": 25.100616016427104
+      },
+      {
+        "parameters": {
+          "sentiment_style": "contrarian",
+          "min_confidence": 0.08
+        },
+        "total_return": 116.67344116880001,
+        "annualized_return": 3.128424734734203,
+        "sharpe_ratio": 0.21581934180772877,
+        "max_drawdown": 69.47941861692674,
+        "win_rate": 58.88888888888889,
+        "total_trades": 270,
+        "avg_pnl_per_trade": 613.8029733333336,
+        "final_value": 216673.44116880003,
+        "signals_generated": 6297,
+        "buy_signals": 2590,
+        "sell_signals": 2072,
+        "years": 25.100616016427104
+      },
+      {
+        "parameters": {
+          "sentiment_style": "contrarian",
+          "min_confidence": 0.12
+        },
+        "total_return": 71.30303117539978,
+        "annualized_return": 2.167583151482244,
+        "sharpe_ratio": 0.18153866649758174,
+        "max_drawdown": 77.12525682337497,
+        "win_rate": 48.888888888888886,
+        "total_trades": 135,
+        "avg_pnl_per_trade": 665.4278325925914,
+        "final_value": 171303.03117539978,
+        "signals_generated": 6297,
+        "buy_signals": 676,
+        "sell_signals": 524,
+        "years": 25.100616016427104
+      },
+      {
+        "parameters": {
+          "sentiment_style": "realistic",
+          "min_confidence": 0.1
+        },
+        "total_return": 48.38760815190002,
+        "annualized_return": 1.5847283151805724,
+        "sharpe_ratio": 0.14139011279549982,
+        "max_drawdown": 77.09535068972485,
+        "win_rate": 50.526315789473685,
+        "total_trades": 190,
+        "avg_pnl_per_trade": 380.48985210526274,
+        "final_value": 148387.60815190003,
+        "signals_generated": 6297,
+        "buy_signals": 1660,
+        "sell_signals": 1356,
+        "years": 25.100616016427104
+      }
+    ]
+  }
+}

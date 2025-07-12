@@ -1,0 +1,41 @@
+# FastAPI and API dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic[email]==2.5.0
+python-multipart==0.0.6
+
+# Database
+sqlalchemy==2.0.23
+sqlite3  # Built into Python
+# For PostgreSQL: psycopg2-binary==2.9.9
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+PyJWT==2.8.0
+
+# Password hashing
+bcrypt==4.1.2
+
+# CORS support for mobile apps
+python-cors==1.0.0
+
+# Async support
+asyncio-mqtt==0.13.0
+aiofiles==23.2.1
+
+# All existing SentimentTrade dependencies
+alpaca-trade-api
+backtrader
+ta
+numpy
+openai
+pytest
+python-telegram-bot
+python-dotenv
+pandas
+requests
+yfinance
+
+# Document processing (for reading specs)
+python-docx==1.1.2
