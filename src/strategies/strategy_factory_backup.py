@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
-Updated Strategy Factory for SentimentTrade Platform
+Strategy Factory for SentimentTrade Platform
 
-Enhanced factory including the new QQQ LEAPS options strategy alongside
-existing momentum, mean reversion, and sentiment-based approaches.
+Manages different trading strategies and provides a unified interface for strategy
+creation, registration, and execution. Supports multiple strategy types including
+momentum, mean reversion, and sentiment-based approaches.
+
+This factory pattern allows easy extension for new strategies while maintaining
+a consistent interface for strategy analysis and execution.
 
 Author: SentimentTrade Development Team
-Version: 2.1.0
+Version: 2.0.0
 Last Updated: July 2025
 """
 
@@ -23,43 +27,78 @@ from database import UserPreferences
 from .default_strategy import DefaultStrategy
 from .momentum_strategy import MomentumStrategy
 from .mean_reversion_strategy import MeanReversionStrategy
-from .qqq_leaps_strategy import QQQLeapsStrategy
 
 
 class BaseStrategy(ABC):
-    """Abstract base class for all trading strategies"""
+    """
+    Abstract base class for all trading strategies
+    
+    Defines the interface that all trading strategies must implement,
+    ensuring consistency across different strategy types.
+    """
     
     def __init__(self, config: TradingConfig, logger: Optional[logging.Logger] = None):
+        """
+        Initialize base strategy
+        
+        Args:
+            config: Trading configuration object
+            logger: Optional logger for strategy events
+        """
         self.config = config
         self.logger = logger or logging.getLogger(__name__)
     
     @abstractmethod
     def analyze_symbol(self, symbol: str, market_data: Dict[str, Any], 
                       sentiment_score: float = 0.0) -> Dict[str, Any]:
-        """Analyze a symbol and generate trading signal"""
+        """
+        Analyze a symbol and generate trading signal
+        
+        Args:
+            symbol: Stock symbol to analyze
+            market_data: Historical and current market data
+            sentiment_score: Sentiment analysis score (-1 to 1)
+            
+        Returns:
+            Dictionary containing trading signal and analysis
+        """
         pass
     
     @abstractmethod
     def get_strategy_info(self) -> Dict[str, Any]:
-        """Get information about this strategy"""
+        """
+        Get information about this strategy
+        
+        Returns:
+            Dictionary containing strategy metadata and characteristics
+        """
         pass
 
 
 class StrategyFactory:
-    """Enhanced Factory class for creating and managing trading strategies"""
+    """
+    Factory class for creating and managing trading strategies
+    
+    Provides centralized strategy management with registration, creation,
+    and analysis capabilities. Supports both built-in and custom strategies.
+    """
     
     def __init__(self):
+        """Initialize the strategy factory with built-in strategies"""
         self._strategies: Dict[str, Type[BaseStrategy]] = {}
         self._register_default_strategies()
     
     def _register_default_strategies(self):
-        """Register all available strategy implementations"""
+        """
+        Register built-in strategies
         
+        Registers all available strategy implementations with the factory.
+        New strategies should be added here when implemented.
+        """
         # Core strategies
         self._strategies['default'] = DefaultStrategy
         self._strategies['momentum'] = MomentumStrategy
         self._strategies['mean_reversion'] = MeanReversionStrategy
-        self._strategies['qqq_leaps'] = QQQLeapsStrategy
         
         # Future strategies (to be implemented)
         # self._strategies['aggressive'] = AggressiveStrategy
@@ -67,9 +106,27 @@ class StrategyFactory:
         # self._strategies['breakout'] = BreakoutStrategy
         # self._strategies['pairs_trading'] = PairsTradingStrategy
     
-    def get_available_strategies(self) -> Dict[str, Dict[str, Any]]:
-        """Get information about all available strategies"""
+    def register_strategy(self, name: str, strategy_class: Type[BaseStrategy]):
+        """
+        Register a new custom strategy
         
+        Args:
+            name: Unique name for the strategy
+            strategy_class: Strategy class implementing BaseStrategy
+        """
+        if not issubclass(strategy_class, BaseStrategy):
+            raise ValueError(f"Strategy class must inherit from BaseStrategy")
+        
+        self._strategies[name] = strategy_class
+        self.logger.info(f"Registered custom strategy: {name}")
+    
+    def get_available_strategies(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Get information about all available strategies
+        
+        Returns:
+            Dictionary mapping strategy names to their metadata and availability
+        """
         strategies_info = {}
         
         # === Default Strategy ===
@@ -82,8 +139,7 @@ class StrategyFactory:
             'suitable_for': ['beginners', 'balanced_traders'],
             'market_conditions': ['trending', 'sideways'],
             'win_rate_range': '45-65%',
-            'typical_holding_period': '1-5 days',
-            'asset_class': 'stocks'
+            'typical_holding_period': '1-5 days'
         }
         
         # === Momentum Strategy ===
@@ -97,7 +153,6 @@ class StrategyFactory:
             'market_conditions': ['trending'],
             'win_rate_range': '40-60%',
             'typical_holding_period': '2-10 days',
-            'asset_class': 'stocks',
             'parameters': {
                 'fast_ma': {'default': 10, 'range': '5-20', 'description': 'Fast moving average period'},
                 'slow_ma': {'default': 30, 'range': '20-50', 'description': 'Slow moving average period'}
@@ -115,47 +170,10 @@ class StrategyFactory:
             'market_conditions': ['sideways', 'volatile'],
             'win_rate_range': '60-75%',
             'typical_holding_period': '1-3 days',
-            'asset_class': 'stocks',
             'parameters': {
                 'period': {'default': 20, 'range': '10-30', 'description': 'Bollinger Bands period'},
                 'devfactor': {'default': 2.0, 'range': '1.5-3.0', 'description': 'Standard deviation multiplier'}
             }
-        }
-        
-        # === QQQ LEAPS Strategy ===
-        strategies_info['qqq_leaps'] = {
-            'name': 'QQQ LEAPS Options',
-            'description': 'Mechanical LEAPS buying strategy with 91% win rate - "The Pelosi Special"',
-            'risk_level': 'medium',
-            'available': True,
-            'indicators': ['Daily Returns', 'Monthly Returns', 'Long-term Trend'],
-            'suitable_for': ['options_traders', 'long_term_investors', 'mechanical_traders'],
-            'market_conditions': ['bull_markets', 'corrections', 'recovery'],
-            'win_rate_range': '85-95%',
-            'typical_holding_period': '3-4 months',
-            'asset_class': 'options',
-            'underlying_asset': 'QQQ',
-            'historical_performance': {
-                'win_rate': '91%',
-                'total_return': '705% over 5 years',
-                'max_drawdown': '18%',
-                'avg_winner': '$2,560',
-                'avg_loser': '$3,348'
-            },
-            'parameters': {
-                'min_drop_pct': {'default': 1.0, 'range': '0.5-2.0', 'description': 'Minimum daily drop to trigger entry'},
-                'target_profit_pct': {'default': 50.0, 'range': '30-100', 'description': 'Target profit percentage'},
-                'target_delta': {'default': 65, 'range': '60-80', 'description': 'Target option delta'},
-                'expiry_months': {'default': 12, 'range': '9-18', 'description': 'LEAPS expiry in months'}
-            },
-            'special_features': [
-                'No technical analysis required',
-                'Set and forget monthly management',
-                'Dollar cost averaging approach',
-                'Mechanical entry/exit rules',
-                'High probability trades',
-                'Limited downside, unlimited upside'
-            ]
         }
         
         # === Future Strategies (Coming Soon) ===
@@ -163,33 +181,56 @@ class StrategyFactory:
             'name': 'Aggressive Growth',
             'description': 'Higher risk strategy targeting maximum returns with momentum focus',
             'risk_level': 'high',
-            'available': False,
+            'available': False,  # Coming soon
             'indicators': ['RSI', 'MACD', 'Momentum', 'Volume', 'Breakout Patterns'],
             'suitable_for': ['experienced_traders', 'high_risk_tolerance'],
             'market_conditions': ['trending', 'volatile'],
             'win_rate_range': '35-55%',
-            'typical_holding_period': '1-7 days',
-            'asset_class': 'stocks'
+            'typical_holding_period': '1-7 days'
         }
         
         strategies_info['conservative'] = {
             'name': 'Conservative',
             'description': 'Lower risk strategy focusing on capital preservation',
             'risk_level': 'low',
-            'available': False,
+            'available': False,  # Coming soon
             'indicators': ['RSI', 'SMA', 'Bollinger Bands', 'Support/Resistance'],
             'suitable_for': ['risk_averse', 'income_focused'],
             'market_conditions': ['trending', 'stable'],
             'win_rate_range': '55-70%',
-            'typical_holding_period': '3-14 days',
-            'asset_class': 'stocks'
+            'typical_holding_period': '3-14 days'
+        }
+        
+        strategies_info['breakout'] = {
+            'name': 'Breakout Trading',
+            'description': 'Identifies and trades significant price breakouts from consolidation',
+            'risk_level': 'medium-high',
+            'available': False,  # Coming soon
+            'indicators': ['Support/Resistance', 'Volume', 'ATR', 'Consolidation Patterns'],
+            'suitable_for': ['breakout_traders', 'momentum_traders'],
+            'market_conditions': ['consolidating', 'pre_breakout'],
+            'win_rate_range': '40-60%',
+            'typical_holding_period': '1-5 days'
         }
         
         return strategies_info
     
     def create_strategy(self, strategy_name: str, user_preferences: Optional[UserPreferences] = None,
                        logger: Optional[logging.Logger] = None) -> BaseStrategy:
-        """Create a strategy instance"""
+        """
+        Create a strategy instance
+        
+        Args:
+            strategy_name: Name of the strategy to create
+            user_preferences: User preferences for configuration
+            logger: Optional logger instance
+            
+        Returns:
+            Strategy instance configured according to preferences
+            
+        Raises:
+            ValueError: If strategy is not available or unknown
+        """
         
         # Validate strategy availability
         available_strategies = self.get_available_strategies()
@@ -217,9 +258,98 @@ class StrategyFactory:
         
         return strategy_class(config, logger)
     
-    def get_strategy_recommendations(self, user_profile: Dict[str, Any]) -> Dict[str, Any]:
-        """Get strategy recommendations based on user profile"""
+    def get_strategy_for_user(self, user_preferences: UserPreferences,
+                             logger: Optional[logging.Logger] = None) -> BaseStrategy:
+        """
+        Get the appropriate strategy for a user based on their preferences
         
+        Args:
+            user_preferences: User's trading preferences and risk profile
+            logger: Optional logger instance
+            
+        Returns:
+            Strategy instance configured for the user's preferences
+        """
+        strategy_name = user_preferences.strategy
+        
+        # Log user strategy selection
+        logger = logger or logging.getLogger(__name__)
+        logger.info(f"Creating strategy for user: {user_preferences.user_id}, "
+                   f"strategy: {strategy_name}, risk_tolerance: {user_preferences.risk_tolerance}")
+        
+        return self.create_strategy(strategy_name, user_preferences, logger)
+    
+    def analyze_with_strategy(self, strategy_name: str, symbol: str, 
+                            market_data: Dict[str, Any], sentiment_score: float = 0.0,
+                            user_preferences: Optional[UserPreferences] = None,
+                            logger: Optional[logging.Logger] = None) -> Dict[str, Any]:
+        """
+        Analyze a symbol using a specific strategy
+        
+        Args:
+            strategy_name: Name of the strategy to use
+            symbol: Stock symbol to analyze
+            market_data: Market data for analysis
+            sentiment_score: Sentiment analysis score (-1 to 1)
+            user_preferences: User preferences for configuration
+            logger: Optional logger instance
+            
+        Returns:
+            Analysis results with trading signals and reasoning
+        """
+        logger = logger or logging.getLogger(__name__)
+        
+        try:
+            # Create strategy instance
+            strategy = self.create_strategy(strategy_name, user_preferences, logger)
+            
+            # Log analysis start
+            logger.info(f"Analyzing {symbol} with {strategy_name} strategy, "
+                       f"sentiment: {sentiment_score:.3f}")
+            
+            # Perform analysis
+            result = strategy.analyze_symbol(symbol, market_data, sentiment_score)
+            
+            # Add strategy metadata to result
+            result['strategy_used'] = strategy_name
+            result['analysis_timestamp'] = market_data.get('timestamp', 'unknown')
+            
+            # Log analysis result
+            logger.info(f"Analysis complete for {symbol}: {result.get('action', 'UNKNOWN')} "
+                       f"with confidence {result.get('confidence', 0.0):.2f}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error analyzing {symbol} with {strategy_name} strategy: {e}")
+            
+            # Return error response with fallback analysis
+            return {
+                'symbol': symbol,
+                'action': 'HOLD',
+                'confidence': 0.0,
+                'current_price': market_data.get('current_price', 0.0),
+                'entry_price': market_data.get('current_price', 0.0),
+                'stop_loss': 0.0,
+                'target_price': 0.0,
+                'risk_reward_ratio': 0.0,
+                'sentiment': sentiment_score,
+                'reasoning': f'Strategy analysis failed: {str(e)}. Defaulting to HOLD.',
+                'strategy_used': strategy_name,
+                'error': str(e),
+                'fallback_applied': True
+            }
+    
+    def get_strategy_recommendations(self, user_profile: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get strategy recommendations based on user profile
+        
+        Args:
+            user_profile: User's trading profile and preferences
+            
+        Returns:
+            Dictionary with recommended strategies and reasoning
+        """
         recommendations = {}
         
         # Extract user characteristics
@@ -227,7 +357,6 @@ class StrategyFactory:
         experience_level = user_profile.get('experience_level', 'beginner').lower()
         trading_style = user_profile.get('trading_style', 'balanced').lower()
         market_preference = user_profile.get('market_preference', 'any').lower()
-        options_experience = user_profile.get('options_experience', False)
         
         # Strategy scoring based on user profile
         strategy_scores = {}
@@ -254,16 +383,6 @@ class StrategyFactory:
         else:
             strategy_scores['mean_reversion'] = 0.3
         
-        # QQQ LEAPS - good for options traders and long-term investors
-        if options_experience and trading_style in ['long_term', 'mechanical', 'set_forget']:
-            strategy_scores['qqq_leaps'] = 0.9
-        elif options_experience and risk_tolerance in ['medium', 'high']:
-            strategy_scores['qqq_leaps'] = 0.8
-        elif experience_level in ['intermediate', 'advanced'] and risk_tolerance != 'low':
-            strategy_scores['qqq_leaps'] = 0.6
-        else:
-            strategy_scores['qqq_leaps'] = 0.2  # Requires options knowledge
-        
         # Sort strategies by score
         sorted_strategies = sorted(strategy_scores.items(), key=lambda x: x[1], reverse=True)
         
@@ -278,11 +397,18 @@ class StrategyFactory:
     
     def _generate_recommendation_reasoning(self, user_profile: Dict[str, Any], 
                                         recommended_strategy: str) -> str:
-        """Generate reasoning for strategy recommendation"""
+        """
+        Generate reasoning for strategy recommendation
         
+        Args:
+            user_profile: User's profile information
+            recommended_strategy: The recommended strategy name
+            
+        Returns:
+            String explaining why this strategy was recommended
+        """
         risk_tolerance = user_profile.get('risk_tolerance', 'medium')
         experience_level = user_profile.get('experience_level', 'beginner')
-        options_experience = user_profile.get('options_experience', False)
         
         reasoning_map = {
             'default': f"Recommended for {experience_level} traders with {risk_tolerance} risk tolerance. "
@@ -292,11 +418,7 @@ class StrategyFactory:
                        f"Works well with {risk_tolerance} risk tolerance and trending markets.",
             
             'mean_reversion': f"Ideal for contrarian traders with {risk_tolerance} risk tolerance. "
-                             "Effective in range-bound and volatile market conditions.",
-            
-            'qqq_leaps': f"Perfect for {'experienced' if options_experience else 'learning'} options traders. "
-                        f"Mechanical strategy with 91% win rate, ideal for {risk_tolerance} risk tolerance. "
-                        "Requires options trading knowledge but offers exceptional risk-adjusted returns."
+                             "Effective in range-bound and volatile market conditions."
         }
         
         return reasoning_map.get(recommended_strategy, 
@@ -309,26 +431,70 @@ strategy_factory = StrategyFactory()
 
 # === Convenience Functions ===
 def get_available_strategies() -> Dict[str, Dict[str, Any]]:
-    """Get information about all available strategies"""
+    """
+    Get information about all available strategies
+    
+    Returns:
+        Dictionary mapping strategy names to their metadata
+    """
     return strategy_factory.get_available_strategies()
 
 
 def create_strategy(strategy_name: str, user_preferences: Optional[UserPreferences] = None,
                    logger: Optional[logging.Logger] = None) -> BaseStrategy:
-    """Create a strategy instance"""
+    """
+    Create a strategy instance
+    
+    Args:
+        strategy_name: Name of the strategy to create
+        user_preferences: Optional user preferences
+        logger: Optional logger instance
+        
+    Returns:
+        Configured strategy instance
+    """
     return strategy_factory.create_strategy(strategy_name, user_preferences, logger)
 
 
+def analyze_symbol(strategy_name: str, symbol: str, market_data: Dict[str, Any],
+                  sentiment_score: float = 0.0, user_preferences: Optional[UserPreferences] = None,
+                  logger: Optional[logging.Logger] = None) -> Dict[str, Any]:
+    """
+    Analyze a symbol using a specific strategy
+    
+    Args:
+        strategy_name: Name of the strategy to use
+        symbol: Stock symbol to analyze
+        market_data: Market data for analysis
+        sentiment_score: Sentiment analysis score
+        user_preferences: Optional user preferences
+        logger: Optional logger instance
+        
+    Returns:
+        Analysis results with trading signals
+    """
+    return strategy_factory.analyze_with_strategy(
+        strategy_name, symbol, market_data, sentiment_score, user_preferences, logger
+    )
+
+
 def get_strategy_recommendations(user_profile: Dict[str, Any]) -> Dict[str, Any]:
-    """Get strategy recommendations based on user profile"""
+    """
+    Get strategy recommendations based on user profile
+    
+    Args:
+        user_profile: User's trading profile and preferences
+        
+    Returns:
+        Dictionary with recommended strategies and reasoning
+    """
     return strategy_factory.get_strategy_recommendations(user_profile)
 
 
 # === Strategy Metadata ===
-__module_name__ = "Enhanced Strategy Factory"
-__module_version__ = "2.1.0"
-__module_description__ = "Centralized strategy management including options strategies"
+__module_name__ = "Strategy Factory"
+__module_version__ = "2.0.0"
+__module_description__ = "Centralized strategy management and creation system"
 __module_author__ = "SentimentTrade Development Team"
-__supported_strategies__ = ["default", "momentum", "mean_reversion", "qqq_leaps"]
+__supported_strategies__ = ["default", "momentum", "mean_reversion"]
 __future_strategies__ = ["aggressive", "conservative", "breakout", "pairs_trading"]
-__new_features__ = ["QQQ LEAPS Options Strategy", "Options Trading Support", "Enhanced Recommendations"]
