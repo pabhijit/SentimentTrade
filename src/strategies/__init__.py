@@ -9,7 +9,7 @@ Available Strategies:
 - DefaultStrategy: Balanced approach with moderate risk
 - MomentumStrategy: Dual moving average crossover for trend following
 - MeanReversionStrategy: Bollinger Bands-based contrarian trading
-- QQQLeapsStrategy: Mechanical LEAPS options strategy with 91% win rate
+- MechanicalOptionsStrategy: Enhanced mechanical options strategy with 3 scenarios (91-96%+ win rates)
 
 Author: SentimentTrade Development Team
 Version: 2.1.0
@@ -20,7 +20,7 @@ Last Updated: July 2025
 from .default_strategy import DefaultStrategy
 from .momentum_strategy import MomentumStrategy
 from .mean_reversion_strategy import MeanReversionStrategy
-from .qqq_leaps_strategy import QQQLeapsStrategy
+from .mechanical_options_strategy import MechanicalOptionsStrategy
 
 # === Strategy Management ===
 from .strategy_factory import (
@@ -45,7 +45,7 @@ __all__ = [
     'DefaultStrategy',
     'MomentumStrategy', 
     'MeanReversionStrategy',
-    'QQQLeapsStrategy',
+    'MechanicalOptionsStrategy',
     'BaseStrategy',
     
     # Factory and Management
@@ -91,15 +91,15 @@ __available_strategies__ = {
         'asset_class': 'stocks',
         'description': 'Bollinger Bands-based contrarian trading'
     },
-    'qqq_leaps': {
-        'class': 'QQQLeapsStrategy',
+    'mechanical_options': {
+        'class': 'MechanicalOptionsStrategy',
         'type': 'options_mechanical',
         'risk_level': 'medium',
         'asset_class': 'options',
         'underlying': 'QQQ',
-        'description': 'Mechanical LEAPS options strategy with 91% win rate',
-        'nickname': 'The Pelosi Special',
-        'win_rate': '91%',
+        'description': 'Enhanced mechanical options strategy with 3 scenarios (91-96%+ win rates)',
+        'nickname': 'The Enhanced Pelosi Special',
+        'win_rate': '91-96%+',
         'historical_return': '705% over 5 years'
     }
 }

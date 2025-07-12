@@ -23,7 +23,7 @@ from database import UserPreferences
 from .default_strategy import DefaultStrategy
 from .momentum_strategy import MomentumStrategy
 from .mean_reversion_strategy import MeanReversionStrategy
-from .qqq_leaps_strategy import QQQLeapsStrategy
+from .mechanical_options_strategy import MechanicalOptionsStrategy
 
 
 class BaseStrategy(ABC):
@@ -59,7 +59,7 @@ class StrategyFactory:
         self._strategies['default'] = DefaultStrategy
         self._strategies['momentum'] = MomentumStrategy
         self._strategies['mean_reversion'] = MeanReversionStrategy
-        self._strategies['qqq_leaps'] = QQQLeapsStrategy
+        self._strategies['mechanical_options'] = MechanicalOptionsStrategy
         
         # Future strategies (to be implemented)
         # self._strategies['aggressive'] = AggressiveStrategy
@@ -122,39 +122,43 @@ class StrategyFactory:
             }
         }
         
-        # === QQQ LEAPS Strategy ===
-        strategies_info['qqq_leaps'] = {
-            'name': 'QQQ LEAPS Options',
-            'description': 'Mechanical LEAPS buying strategy with 91% win rate - "The Pelosi Special"',
+        # === Mechanical Options Strategy ===
+        strategies_info['mechanical_options'] = {
+            'name': 'Mechanical Options Strategy',
+            'description': 'Enhanced mechanical options strategy with 3 scenarios: Basic (91%), Gap+Trend (96%), Pullback+Trend (96%+)',
             'risk_level': 'medium',
             'available': True,
-            'indicators': ['Daily Returns', 'Monthly Returns', 'Long-term Trend'],
+            'indicators': ['Daily Returns', 'Gap Analysis', 'SMA Trend', 'ATH Pullback'],
             'suitable_for': ['options_traders', 'long_term_investors', 'mechanical_traders'],
             'market_conditions': ['bull_markets', 'corrections', 'recovery'],
-            'win_rate_range': '85-95%',
+            'win_rate_range': '91-96%+',
             'typical_holding_period': '3-4 months',
             'asset_class': 'options',
             'underlying_asset': 'QQQ',
             'historical_performance': {
-                'win_rate': '91%',
+                'scenario_1_win_rate': '91%',
+                'scenario_2_win_rate': '96%',
+                'scenario_3_win_rate': '96%+',
                 'total_return': '705% over 5 years',
                 'max_drawdown': '18%',
                 'avg_winner': '$2,560',
                 'avg_loser': '$3,348'
             },
             'parameters': {
+                'scenario': {'default': 1, 'range': '1-3', 'description': 'Trading scenario (1=Basic, 2=Gap+Trend, 3=Pullback+Trend)'},
                 'min_drop_pct': {'default': 1.0, 'range': '0.5-2.0', 'description': 'Minimum daily drop to trigger entry'},
                 'target_profit_pct': {'default': 50.0, 'range': '30-100', 'description': 'Target profit percentage'},
                 'target_delta': {'default': 65, 'range': '60-80', 'description': 'Target option delta'},
                 'expiry_months': {'default': 12, 'range': '9-18', 'description': 'LEAPS expiry in months'}
             },
             'special_features': [
+                'Three distinct trading scenarios',
+                'Optimized entry criteria for higher win rates',
+                'Gap analysis and trend confirmation',
+                'ATH pullback detection',
                 'No technical analysis required',
                 'Set and forget monthly management',
-                'Dollar cost averaging approach',
-                'Mechanical entry/exit rules',
-                'High probability trades',
-                'Limited downside, unlimited upside'
+                'Mechanical entry/exit rules'
             ]
         }
         
@@ -254,15 +258,15 @@ class StrategyFactory:
         else:
             strategy_scores['mean_reversion'] = 0.3
         
-        # QQQ LEAPS - good for options traders and long-term investors
+        # Mechanical Options - good for options traders and long-term investors
         if options_experience and trading_style in ['long_term', 'mechanical', 'set_forget']:
-            strategy_scores['qqq_leaps'] = 0.9
+            strategy_scores['mechanical_options'] = 0.9
         elif options_experience and risk_tolerance in ['medium', 'high']:
-            strategy_scores['qqq_leaps'] = 0.8
+            strategy_scores['mechanical_options'] = 0.8
         elif experience_level in ['intermediate', 'advanced'] and risk_tolerance != 'low':
-            strategy_scores['qqq_leaps'] = 0.6
+            strategy_scores['mechanical_options'] = 0.6
         else:
-            strategy_scores['qqq_leaps'] = 0.2  # Requires options knowledge
+            strategy_scores['mechanical_options'] = 0.2  # Requires options knowledge
         
         # Sort strategies by score
         sorted_strategies = sorted(strategy_scores.items(), key=lambda x: x[1], reverse=True)
@@ -294,8 +298,8 @@ class StrategyFactory:
             'mean_reversion': f"Ideal for contrarian traders with {risk_tolerance} risk tolerance. "
                              "Effective in range-bound and volatile market conditions.",
             
-            'qqq_leaps': f"Perfect for {'experienced' if options_experience else 'learning'} options traders. "
-                        f"Mechanical strategy with 91% win rate, ideal for {risk_tolerance} risk tolerance. "
+            'mechanical_options': f"Perfect for {'experienced' if options_experience else 'learning'} options traders. "
+                        f"Mechanical strategy with 91-96%+ win rate, ideal for {risk_tolerance} risk tolerance. "
                         "Requires options trading knowledge but offers exceptional risk-adjusted returns."
         }
         
@@ -329,6 +333,6 @@ __module_name__ = "Enhanced Strategy Factory"
 __module_version__ = "2.1.0"
 __module_description__ = "Centralized strategy management including options strategies"
 __module_author__ = "SentimentTrade Development Team"
-__supported_strategies__ = ["default", "momentum", "mean_reversion", "qqq_leaps"]
+__supported_strategies__ = ["default", "momentum", "mean_reversion", "mechanical_options"]
 __future_strategies__ = ["aggressive", "conservative", "breakout", "pairs_trading"]
-__new_features__ = ["QQQ LEAPS Options Strategy", "Options Trading Support", "Enhanced Recommendations"]
+__new_features__ = ["Mechanical Options Strategy", "Options Trading Support", "Enhanced Recommendations"]
