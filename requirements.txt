@@ -1,6 +1,11 @@
-requests
-python-dotenv
+alpaca-trade-api
+backtrader
+ta
 numpy
 openai
-alpaca-trade-api
+pytest
 python-telegram-bot
+python-dotenv
+pandas
+requests
+yfinance
