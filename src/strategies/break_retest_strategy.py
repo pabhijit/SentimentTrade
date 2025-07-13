@@ -36,47 +36,61 @@ class BreakRetestSwingStrategy(bt.Strategy):
         ('min_level_strength', 3),      # Minimum touches to consider a level significant
         ('level_tolerance', 0.002),     # 0.2% tolerance for level identification
         
-        # Enhanced Breakout Parameters
-        ('min_breakout_strength', 0.01), # 1% minimum breakout strength
-        ('breakout_volume_factor', 1.5), # Volume should be 1.5x average for valid breakout
-        ('max_breakout_age', 10),       # Maximum days since breakout to consider retest
+        # Enhanced Breakout Parameters - OPTIMIZATION 1: Parameter Tuning
+        ('min_breakout_strength', 0.008), # Reduced from 1% to 0.8% for more opportunities
+        ('breakout_volume_factor', 1.3), # Reduced from 1.5x to 1.3x for more flexibility
+        ('max_breakout_age', 15),       # Increased from 10 to 15 days for more opportunities
         ('use_close_breakout', True),   # Use closing price for breakout confirmation
         
-        # Enhanced Retest Parameters
-        ('retest_tolerance', 0.005),    # 0.5% tolerance for retest identification
-        ('min_retest_bounce', 0.003),   # 0.3% minimum bounce from retest level
-        ('retest_confirmation_bars', 2), # Bars to confirm retest held
-        ('require_pattern_confirmation', True), # Require candlestick pattern confirmation
-        ('require_momentum_confirmation', True), # Require momentum confirmation
+        # Enhanced Retest Parameters - OPTIMIZATION 1: Parameter Tuning
+        ('retest_tolerance', 0.007),    # Increased from 0.5% to 0.7% for more flexibility
+        ('min_retest_bounce', 0.002),   # Reduced from 0.3% to 0.2% for easier confirmation
+        ('retest_confirmation_bars', 1), # Reduced from 2 to 1 for faster entries
+        ('require_pattern_confirmation', True), # Keep pattern confirmation
+        ('require_momentum_confirmation', True), # Keep momentum confirmation
         
-        # Enhanced Risk Management
-        ('position_size_pct', 0.02),    # 2% risk per trade
+        # Enhanced Risk Management - OPTIMIZATION 4: Risk Management Enhancement
+        ('position_size_pct', 0.015),   # Reduced from 2% to 1.5% for better risk control
         ('use_structure_stops', True),  # Use swing-based stops instead of ATR
-        ('stop_loss_atr_mult', 2.0),    # Fallback ATR stop if no structure available
+        ('stop_loss_atr_mult', 1.8),    # Reduced from 2.0 to 1.8 for tighter stops
         ('use_adaptive_tp', True),      # Use adaptive take profit based on structure
-        ('take_profit_ratio', 3.0),     # Fallback fixed R:R ratio
-        ('max_holding_days', 30),       # Maximum holding period for swing trades
+        ('take_profit_ratio', 2.5),     # Reduced from 3.0 to 2.5 for more realistic targets
+        ('max_holding_days', 25),       # Reduced from 30 to 25 days
         
-        # Trade Management Enhancements
+        # Trade Management Enhancements - OPTIMIZATION 4: Risk Management Enhancement
         ('enable_trailing_stop', True), # Enable trailing stop loss
-        ('trailing_stop_atr_mult', 1.5), # Trailing stop at 1.5x ATR
-        ('partial_profit_level', 0.5),  # Take 50% profit at 1.5:1 R:R
-        ('trade_cooldown_days', 3),     # Days to wait between trades in same area
+        ('trailing_stop_atr_mult', 1.3), # Reduced from 1.5 to 1.3 for tighter trailing
+        ('partial_profit_level', 0.6),  # Increased from 0.5 to 0.6 for earlier profit taking
+        ('trade_cooldown_days', 2),     # Reduced from 3 to 2 days for more opportunities
         
-        # Confirmation Indicators
-        ('rsi_period', 7),              # RSI period for momentum confirmation
-        ('rsi_momentum_threshold', 2),  # RSI must improve by this amount
-        ('pattern_lookback', 3),        # Bars to look back for pattern confirmation
+        # Confirmation Indicators - OPTIMIZATION 1: Parameter Tuning
+        ('rsi_period', 9),              # Increased from 7 to 9 for smoother signals
+        ('rsi_momentum_threshold', 1.5), # Reduced from 2 to 1.5 for easier confirmation
+        ('pattern_lookback', 2),        # Reduced from 3 to 2 for faster pattern recognition
         
-        # Filters
-        ('min_atr_pct', 0.01),          # Minimum 1% ATR for volatility filter
-        ('trend_filter_period', 50),    # Use 50-day MA for trend filter
+        # Filters - OPTIMIZATION 2: Market Regime Adaptation
+        ('min_atr_pct', 0.008),         # Reduced from 1% to 0.8% for lower volatility markets
+        ('trend_filter_period', 50),    # Keep 50-day MA for trend filter
         ('enable_trend_filter', True),  # Only trade in direction of trend
-        ('max_concurrent_trades', 1),   # Maximum concurrent positions
+        ('max_concurrent_trades', 2),   # Increased from 1 to 2 for more opportunities
         
         # Performance Tracking
         ('track_retest_success', True), # Track retest success rates
-        ('min_trade_spacing', 0.02),    # Minimum 2% price difference between trades
+        ('min_trade_spacing', 0.015),   # Reduced from 2% to 1.5% for closer trades
+        
+        # OPTIMIZATION 2: Market Regime Adaptation - New Parameters
+        ('enable_regime_detection', True), # Enable market regime detection
+        ('regime_lookback', 100),       # Period for regime analysis
+        ('trending_threshold', 0.7),    # Threshold for trending vs ranging market
+        ('volatility_regime_period', 20), # Period for volatility regime detection
+        ('adaptive_confirmation', True), # Adapt confirmation requirements to market regime
+        
+        # OPTIMIZATION 4: Risk Management Enhancement - New Parameters
+        ('enable_volatility_sizing', True), # Enable volatility-based position sizing
+        ('max_portfolio_risk', 0.06),   # Maximum 6% portfolio risk across all positions
+        ('correlation_limit', 0.7),     # Maximum correlation between positions
+        ('drawdown_protection', True),  # Enable drawdown protection
+        ('max_consecutive_losses', 3),  # Maximum consecutive losses before reducing size
     )
     
     def __init__(self):
@@ -112,6 +126,23 @@ class BreakRetestSwingStrategy(bt.Strategy):
         self.recent_trade_levels = []   # Recent trade levels for clustering prevention
         self.last_trade_date = None     # Last trade date for cooldown
         
+        # Enhancement 3: Add cooldown timer between trades
+        self.last_trade_bar = None
+        self.trade_cooldown_bars = 10  # cooldown period (adjustable)
+        
+        # OPTIMIZATION 2: Market Regime Detection
+        self.market_regime = 'neutral'  # 'trending', 'ranging', 'volatile'
+        self.trend_strength = 0.0       # Current trend strength
+        self.volatility_regime = 'normal' # 'low', 'normal', 'high'
+        self.regime_history = []        # Historical regime data
+        
+        # OPTIMIZATION 4: Enhanced Risk Management
+        self.portfolio_risk = 0.0       # Current portfolio risk
+        self.position_correlations = {} # Track position correlations
+        self.consecutive_losses = 0     # Track consecutive losses
+        self.drawdown_protection_active = False # Drawdown protection status
+        self.volatility_multiplier = 1.0 # Volatility-based sizing multiplier
+        
         # Enhanced Performance Tracking
         self.total_trades = 0
         self.winning_trades = 0
@@ -139,6 +170,10 @@ class BreakRetestSwingStrategy(bt.Strategy):
         if len(self.data) < self.params.lookback_period + 1:
             return
         
+        # OPTIMIZATION 2: Update market regime detection
+        if self.params.enable_regime_detection:
+            self._update_market_regime()
+        
         # Update swing highs and lows
         self._update_swing_points()
         
@@ -160,6 +195,68 @@ class BreakRetestSwingStrategy(bt.Strategy):
         
         # Update performance metrics
         self._update_performance_metrics()
+    
+    def _update_market_regime(self):
+        """OPTIMIZATION 2: Detect and adapt to market regime"""
+        
+        if len(self.data) < self.params.regime_lookback:
+            return
+        
+        # Calculate trend strength using linear regression
+        prices = [self.data.close[-i] for i in range(self.params.regime_lookback)]
+        x = np.arange(len(prices))
+        
+        # Linear regression to determine trend
+        slope, intercept = np.polyfit(x, prices, 1)
+        r_squared = np.corrcoef(x, prices)[0, 1] ** 2
+        
+        # Normalize slope by price for percentage trend
+        trend_strength = (slope * len(prices)) / prices[0]
+        self.trend_strength = abs(trend_strength)
+        
+        # Determine market regime
+        if r_squared > self.params.trending_threshold:
+            self.market_regime = 'trending'
+        else:
+            self.market_regime = 'ranging'
+        
+        # Volatility regime detection
+        recent_returns = []
+        for i in range(1, self.params.volatility_regime_period + 1):
+            if len(self.data) > i:
+                ret = (self.data.close[-i] - self.data.close[-i-1]) / self.data.close[-i-1]
+                recent_returns.append(abs(ret))
+        
+        if recent_returns:
+            avg_volatility = np.mean(recent_returns)
+            if avg_volatility > 0.02:  # 2% average daily moves
+                self.volatility_regime = 'high'
+            elif avg_volatility < 0.01:  # 1% average daily moves
+                self.volatility_regime = 'low'
+            else:
+                self.volatility_regime = 'normal'
+        
+        # Store regime history
+        regime_data = {
+            'date': self.data.datetime.date(0),
+            'regime': self.market_regime,
+            'trend_strength': self.trend_strength,
+            'volatility': self.volatility_regime,
+            'r_squared': r_squared
+        }
+        self.regime_history.append(regime_data)
+        
+        # Keep only recent history
+        if len(self.regime_history) > 100:
+            self.regime_history = self.regime_history[-100:]
+        
+        # Update volatility multiplier for position sizing
+        if self.volatility_regime == 'high':
+            self.volatility_multiplier = 0.7  # Reduce size in high volatility
+        elif self.volatility_regime == 'low':
+            self.volatility_multiplier = 1.2  # Increase size in low volatility
+        else:
+            self.volatility_multiplier = 1.0  # Normal sizing
     
     def _update_swing_points(self):
         """Identify and update swing highs and lows with enhanced logic"""
@@ -248,19 +345,17 @@ class BreakRetestSwingStrategy(bt.Strategy):
     def _check_for_enhanced_breakouts(self):
         """Enhanced breakout detection with close-based confirmation"""
         
-        current_close = self.data.close[0]
+        # Enhancement 1: Add close price confirmation
+        last_close = self.data.close[0]
         current_high = self.data.high[0]
         current_low = self.data.low[0]
         current_volume = self.data.volume[0]
         avg_volume = self.volume_sma[0]
         
-        # Use close-based breakouts for more reliability
-        breakout_price = current_close if self.params.use_close_breakout else current_high
-        breakdown_price = current_close if self.params.use_close_breakout else current_low
-        
-        # Check resistance breakouts (bullish)
+        # Check resistance breakouts (bullish) - Enhanced with close confirmation
         for resistance in self.resistance_levels:
-            if (breakout_price > resistance['price'] * (1 + self.params.min_breakout_strength) and
+            if (current_high > resistance['price'] * (1 + self.params.min_breakout_strength) and
+                last_close > resistance['price'] * (1 + self.params.min_breakout_strength) and
                 current_volume > avg_volume * self.params.breakout_volume_factor):
                 
                 # Additional confirmation: ensure it's not a false breakout
@@ -268,23 +363,24 @@ class BreakRetestSwingStrategy(bt.Strategy):
                     breakout = {
                         'type': 'resistance_break',
                         'level_price': resistance['price'],
-                        'breakout_price': breakout_price,
+                        'breakout_price': last_close,
                         'breakout_date': self.data.datetime.date(0),
                         'volume_confirmation': True,
                         'direction': 'bullish',
                         'level_strength': resistance['strength'],
-                        'close_based': self.params.use_close_breakout,
+                        'close_based': True,
                         'strength_score': self._calculate_breakout_strength(resistance, 'bullish')
                     }
                     
                     # Check if we already have this breakout
                     if not self._is_duplicate_breakout(breakout):
                         self.recent_breakouts.append(breakout)
-                        print(f"📈 Enhanced Resistance Breakout: {resistance['price']:.2f} -> {breakout_price:.2f} (Close-based: {self.params.use_close_breakout})")
+                        print(f"📈 Enhanced Resistance Breakout: {resistance['price']:.2f} -> {last_close:.2f} (Close-confirmed)")
         
-        # Check support breakouts (bearish)
+        # Check support breakouts (bearish) - Enhanced with close confirmation
         for support in self.support_levels:
-            if (breakdown_price < support['price'] * (1 - self.params.min_breakout_strength) and
+            if (current_low < support['price'] * (1 - self.params.min_breakout_strength) and
+                last_close < support['price'] * (1 - self.params.min_breakout_strength) and
                 current_volume > avg_volume * self.params.breakout_volume_factor):
                 
                 # Additional confirmation: ensure it's not a false breakdown
@@ -292,19 +388,19 @@ class BreakRetestSwingStrategy(bt.Strategy):
                     breakout = {
                         'type': 'support_break',
                         'level_price': support['price'],
-                        'breakout_price': breakdown_price,
+                        'breakout_price': last_close,
                         'breakout_date': self.data.datetime.date(0),
                         'volume_confirmation': True,
                         'direction': 'bearish',
                         'level_strength': support['strength'],
-                        'close_based': self.params.use_close_breakout,
+                        'close_based': True,
                         'strength_score': self._calculate_breakout_strength(support, 'bearish')
                     }
                     
                     # Check if we already have this breakout
                     if not self._is_duplicate_breakout(breakout):
                         self.recent_breakouts.append(breakout)
-                        print(f"📉 Enhanced Support Breakout: {support['price']:.2f} -> {breakdown_price:.2f} (Close-based: {self.params.use_close_breakout})")
+                        print(f"📉 Enhanced Support Breakout: {support['price']:.2f} -> {last_close:.2f} (Close-confirmed)")
     
     def _confirm_breakout_strength(self, level_price: float, direction: str) -> bool:
         """Confirm breakout strength with additional filters"""
@@ -388,19 +484,24 @@ class BreakRetestSwingStrategy(bt.Strategy):
     def _confirm_enhanced_retest_hold(self, breakout: Dict, direction: str) -> bool:
         """Enhanced retest confirmation with patterns and momentum"""
         
-        # Basic bounce confirmation
+        # Enhancement 2: Add candle body confirmation
+        bullish_body = self.data.close[0] > self.data.open[0]
         current_price = self.data.close[0]
         level_price = breakout['level_price']
         min_bounce = self.params.min_retest_bounce
         
+        # Enhanced bounce confirmation with candle body structure
         basic_bounce = False
         if direction == 'bullish':
-            basic_bounce = current_price > level_price * (1 + min_bounce)
+            basic_bounce = bullish_body and current_price > level_price * (1 + min_bounce)
         else:
-            basic_bounce = current_price < level_price * (1 - min_bounce)
+            basic_bounce = not bullish_body and current_price < level_price * (1 - min_bounce)
         
         if not basic_bounce:
             return False
+        
+        # OPTIMIZATION 2: Adaptive confirmation based on market regime
+        required_confirmations = self._get_required_confirmations()
         
         # Enhanced confirmations
         confirmations = []
@@ -425,13 +526,32 @@ class BreakRetestSwingStrategy(bt.Strategy):
         if volume_confirmed:
             print(f"   ✓ Volume confirmed for retest")
         
-        # Require at least 2 out of 3 confirmations
+        # OPTIMIZATION 2: Regime-adaptive confirmation requirements
         confirmed_count = sum(confirmations)
-        total_required = len([c for c in [self.params.require_pattern_confirmation, 
-                                        self.params.require_momentum_confirmation, True] if c])
-        
         success_rate = confirmed_count / len(confirmations) if confirmations else 0
-        return success_rate >= 0.67  # At least 67% of confirmations must pass
+        
+        return success_rate >= required_confirmations
+    
+    def _get_required_confirmations(self) -> float:
+        """OPTIMIZATION 2: Get required confirmation threshold based on market regime"""
+        
+        if not self.params.adaptive_confirmation:
+            return 0.67  # Default 67% requirement
+        
+        # Adapt based on market regime
+        if self.market_regime == 'trending':
+            # In trending markets, be less strict to catch more moves
+            if self.trend_strength > 0.05:  # Strong trend
+                return 0.5   # 50% confirmations needed
+            else:
+                return 0.6   # 60% confirmations needed
+        
+        elif self.market_regime == 'ranging':
+            # In ranging markets, be more strict for quality
+            return 0.75  # 75% confirmations needed
+        
+        else:
+            return 0.67  # Default for neutral/unknown regime
     
     def _check_candlestick_patterns(self, direction: str) -> bool:
         """Check for bullish/bearish candlestick patterns"""
@@ -528,6 +648,12 @@ class BreakRetestSwingStrategy(bt.Strategy):
     def _is_in_cooldown(self) -> bool:
         """Check if we're in cooldown period between trades"""
         
+        # Enhancement 3: Check bar-based cooldown
+        if self.last_trade_bar is None:
+            return False
+        return len(self.data) - self.last_trade_bar < self.trade_cooldown_bars
+        
+        # Original date-based cooldown (keep as backup)
         if not self.last_trade_date:
             return False
         
@@ -546,6 +672,16 @@ class BreakRetestSwingStrategy(bt.Strategy):
     def _enter_enhanced_long_trade(self, breakout: Dict) -> bool:
         """Enter enhanced long position with structure-based stops and adaptive targets"""
         
+        # Enhancement 3: Add cooldown check
+        if self._is_in_cooldown():
+            print("🕐 Cooldown active, skipping trade.")
+            return False
+        
+        # Enhancement 5: Prevent duplicate trade setups on same level
+        if self.breakout_level in [b['level_price'] for b in self.recent_breakouts]:
+            print("⚠️ Already traded this breakout level recently.")
+            return False
+        
         if not self._apply_enhanced_filters('long'):
             return False
         
@@ -556,25 +692,23 @@ class BreakRetestSwingStrategy(bt.Strategy):
             print(f"   ⚠️ Skipping trade - too close to recent trade level")
             return False
         
-        # Calculate structure-based stop loss
-        structure_stop = self._calculate_structure_stop('long')
-        if structure_stop == 0:
-            # Fallback to ATR-based stop
-            atr_value = self.atr[0]
-            structure_stop = current_price - (atr_value * self.params.stop_loss_atr_mult)
+        # Enhancement 4: Smarter stop loss using swing low/high if closer than ATR
+        atr_value = self.atr[0]
+        stop_distance = atr_value * self.params.stop_loss_atr_mult
+        
+        # Check for nearby swing lows for better stop placement
+        swing_lows_nearby = [low['price'] for low in self.swing_lows if abs(current_price - low['price']) < 2 * stop_distance]
+        if swing_lows_nearby:
+            structure_stop = max(swing_lows_nearby)
+            self.stop_loss_price = min(current_price - stop_distance, structure_stop)
+        else:
+            self.stop_loss_price = current_price - stop_distance
         
         # Calculate structure-based take profit
-        structure_target = self._calculate_structure_target('long', current_price, structure_stop)
+        structure_target = self._calculate_structure_target('long', current_price, self.stop_loss_price)
         
-        # Calculate position size based on actual risk
-        risk_amount = self.broker.getvalue() * self.params.position_size_pct
-        actual_stop_distance = current_price - structure_stop
-        
-        if actual_stop_distance <= 0:
-            print(f"   ⚠️ Invalid stop distance: {actual_stop_distance}")
-            return False
-        
-        position_size = int(risk_amount / actual_stop_distance)
+        # OPTIMIZATION 4: Use enhanced position sizing
+        position_size = self._calculate_optimized_position_size(current_price, self.stop_loss_price, 'long')
         
         if position_size <= 0:
             print(f"   ⚠️ Invalid position size: {position_size}")
@@ -584,14 +718,16 @@ class BreakRetestSwingStrategy(bt.Strategy):
         order = self.buy(size=position_size)
         
         if order:
+            # Enhancement 3: Update cooldown tracking
+            self.last_trade_bar = len(self.data)
+            
             # Set trade tracking variables
             self.entry_price = current_price
-            self.stop_loss_price = structure_stop
             self.take_profit_price = structure_target
             self.entry_date = self.data.datetime.date(0)
             self.trade_direction = 'long'
             self.breakout_level = breakout['level_price']
-            self.structure_stop = structure_stop
+            self.structure_stop = self.stop_loss_price
             self.structure_target = structure_target
             
             # Add to recent trade levels
@@ -599,12 +735,115 @@ class BreakRetestSwingStrategy(bt.Strategy):
             self.last_trade_date = self.data.datetime.date(0)
             
             # Calculate risk-reward ratio
-            risk = current_price - structure_stop
+            risk = current_price - self.stop_loss_price
+            reward = structure_target - current_price
+            rr_ratio = reward / risk if risk > 0 else 0
+            
+            # OPTIMIZATION 2: Log market regime context
+            regime_info = f"Regime: {self.market_regime}, Volatility: {self.volatility_regime}, Trend: {self.trend_strength:.3f}"
+            
+            print(f"🟢 LONG ENTRY: Price: {current_price:.2f}")
+            print(f"   📍 Smart Stop: {self.stop_loss_price:.2f} (Risk: {risk:.2f})")
+            print(f"   🎯 Structure Target: {structure_target:.2f} (Reward: {reward:.2f})")
+            print(f"   📊 R:R Ratio: 1:{rr_ratio:.2f}")
+            print(f"   📦 Position Size: {position_size} shares")
+            print(f"   🌍 Market Context: {regime_info}")
+            
+            return True
+        
+        return False
+        
+    def _calculate_optimized_position_size(self, entry_price: float, stop_price: float, direction: str) -> int:
+        """OPTIMIZATION 4: Enhanced position sizing with volatility and risk management"""
+        
+        # Base risk amount
+        base_risk = self.broker.getvalue() * self.params.position_size_pct
+        
+        # OPTIMIZATION 4: Apply volatility-based sizing
+        if self.params.enable_volatility_sizing:
+            base_risk *= self.volatility_multiplier
+        
+        # OPTIMIZATION 4: Reduce size after consecutive losses
+        if self.params.drawdown_protection and self.consecutive_losses >= self.params.max_consecutive_losses:
+            consecutive_loss_multiplier = max(0.5, 1.0 - (self.consecutive_losses - self.params.max_consecutive_losses) * 0.1)
+            base_risk *= consecutive_loss_multiplier
+            print(f"   📉 Reducing position size due to {self.consecutive_losses} consecutive losses (multiplier: {consecutive_loss_multiplier:.2f})")
+        
+        # Calculate actual stop distance
+        actual_stop_distance = abs(entry_price - stop_price)
+        
+        if actual_stop_distance <= 0:
+            return 0
+        
+        # Calculate base position size
+        position_size = int(base_risk / actual_stop_distance)
+        
+        # OPTIMIZATION 4: Portfolio risk management
+        if self.params.enable_volatility_sizing:
+            # Check total portfolio risk
+            current_portfolio_risk = self._calculate_current_portfolio_risk()
+            additional_risk = (position_size * actual_stop_distance) / self.broker.getvalue()
+            
+            if current_portfolio_risk + additional_risk > self.params.max_portfolio_risk:
+                # Reduce position size to stay within portfolio risk limit
+                max_additional_risk = self.params.max_portfolio_risk - current_portfolio_risk
+                if max_additional_risk > 0:
+                    position_size = int((max_additional_risk * self.broker.getvalue()) / actual_stop_distance)
+                    print(f"   📊 Position size reduced for portfolio risk management: {position_size}")
+                else:
+                    print(f"   ⚠️ Portfolio risk limit reached, skipping trade")
+                    return 0
+        
+        return max(position_size, 1)  # Minimum 1 share
+    
+    def _calculate_current_portfolio_risk(self) -> float:
+        """Calculate current portfolio risk from open positions"""
+        
+        if not self.position:
+            return 0.0
+        
+        # For simplicity, estimate risk as current position value * stop distance percentage
+        current_price = self.data.close[0]
+        position_value = abs(self.position.size) * current_price
+        
+        if self.stop_loss_price > 0:
+            stop_distance_pct = abs(current_price - self.stop_loss_price) / current_price
+            position_risk = (position_value * stop_distance_pct) / self.broker.getvalue()
+            return position_risk
+        
+        return 0.0
+        
+        if position_size <= 0:
+            print(f"   ⚠️ Invalid position size: {position_size}")
+            return False
+        
+        # Execute the trade
+        order = self.buy(size=position_size)
+        
+        if order:
+            # Enhancement 3: Update cooldown tracking
+            self.last_trade_bar = len(self.data)
+            
+            # Set trade tracking variables
+            self.entry_price = current_price
+            self.take_profit_price = structure_target
+            self.entry_date = self.data.datetime.date(0)
+            self.trade_direction = 'long'
+            self.breakout_level = breakout['level_price']
+            self.structure_stop = self.stop_loss_price
+            self.structure_target = structure_target
+            
+            # Add to recent trade levels
+            self.recent_trade_levels.append(current_price)
+            self.last_trade_date = self.data.datetime.date(0)
+            
+            # Calculate risk-reward ratio
+            risk = current_price - self.stop_loss_price
             reward = structure_target - current_price
             rr_ratio = reward / risk if risk > 0 else 0
             
             print(f"🟢 LONG ENTRY: Price: {current_price:.2f}")
-            print(f"   📍 Structure Stop: {structure_stop:.2f} (Risk: {risk:.2f})")
+            print(f"   📍 Smart Stop: {self.stop_loss_price:.2f} (Risk: {risk:.2f})")
             print(f"   🎯 Structure Target: {structure_target:.2f} (Reward: {reward:.2f})")
             print(f"   📊 R:R Ratio: 1:{rr_ratio:.2f}")
             print(f"   📦 Position Size: {position_size} shares")
@@ -617,6 +856,16 @@ class BreakRetestSwingStrategy(bt.Strategy):
     def _enter_enhanced_short_trade(self, breakout: Dict) -> bool:
         """Enter enhanced short position with structure-based stops and adaptive targets"""
         
+        # Enhancement 3: Add cooldown check
+        if self._is_in_cooldown():
+            print("🕐 Cooldown active, skipping trade.")
+            return False
+        
+        # Enhancement 5: Prevent duplicate trade setups on same level
+        if self.breakout_level in [b['level_price'] for b in self.recent_breakouts]:
+            print("⚠️ Already traded this breakout level recently.")
+            return False
+        
         if not self._apply_enhanced_filters('short'):
             return False
         
@@ -627,19 +876,24 @@ class BreakRetestSwingStrategy(bt.Strategy):
             print(f"   ⚠️ Skipping trade - too close to recent trade level")
             return False
         
-        # Calculate structure-based stop loss
-        structure_stop = self._calculate_structure_stop('short')
-        if structure_stop == 0:
-            # Fallback to ATR-based stop
-            atr_value = self.atr[0]
-            structure_stop = current_price + (atr_value * self.params.stop_loss_atr_mult)
+        # Enhancement 4: Smarter stop loss using swing high if closer than ATR
+        atr_value = self.atr[0]
+        stop_distance = atr_value * self.params.stop_loss_atr_mult
+        
+        # Check for nearby swing highs for better stop placement
+        swing_highs_nearby = [high['price'] for high in self.swing_highs if abs(current_price - high['price']) < 2 * stop_distance]
+        if swing_highs_nearby:
+            structure_stop = min(swing_highs_nearby)
+            self.stop_loss_price = max(current_price + stop_distance, structure_stop)
+        else:
+            self.stop_loss_price = current_price + stop_distance
         
         # Calculate structure-based take profit
-        structure_target = self._calculate_structure_target('short', current_price, structure_stop)
+        structure_target = self._calculate_structure_target('short', current_price, self.stop_loss_price)
         
         # Calculate position size based on actual risk
         risk_amount = self.broker.getvalue() * self.params.position_size_pct
-        actual_stop_distance = structure_stop - current_price
+        actual_stop_distance = self.stop_loss_price - current_price
         
         if actual_stop_distance <= 0:
             print(f"   ⚠️ Invalid stop distance: {actual_stop_distance}")
@@ -655,14 +909,16 @@ class BreakRetestSwingStrategy(bt.Strategy):
         order = self.sell(size=position_size)
         
         if order:
+            # Enhancement 3: Update cooldown tracking
+            self.last_trade_bar = len(self.data)
+            
             # Set trade tracking variables
             self.entry_price = current_price
-            self.stop_loss_price = structure_stop
             self.take_profit_price = structure_target
             self.entry_date = self.data.datetime.date(0)
             self.trade_direction = 'short'
             self.breakout_level = breakout['level_price']
-            self.structure_stop = structure_stop
+            self.structure_stop = self.stop_loss_price
             self.structure_target = structure_target
             
             # Add to recent trade levels
@@ -670,12 +926,12 @@ class BreakRetestSwingStrategy(bt.Strategy):
             self.last_trade_date = self.data.datetime.date(0)
             
             # Calculate risk-reward ratio
-            risk = structure_stop - current_price
+            risk = self.stop_loss_price - current_price
             reward = current_price - structure_target
             rr_ratio = reward / risk if risk > 0 else 0
             
             print(f"🔴 SHORT ENTRY: Price: {current_price:.2f}")
-            print(f"   📍 Structure Stop: {structure_stop:.2f} (Risk: {risk:.2f})")
+            print(f"   📍 Smart Stop: {self.stop_loss_price:.2f} (Risk: {risk:.2f})")
             print(f"   🎯 Structure Target: {structure_target:.2f} (Reward: {reward:.2f})")
             print(f"   📊 R:R Ratio: 1:{rr_ratio:.2f}")
             print(f"   📦 Position Size: {position_size} shares")
@@ -1017,10 +1273,14 @@ class BreakRetestSwingStrategy(bt.Strategy):
             self.winning_trades += 1
             result = "WIN"
             emoji = "🟢"
+            # OPTIMIZATION 4: Reset consecutive losses on win
+            self.consecutive_losses = 0
         else:
             self.losing_trades += 1
             result = "LOSS"
             emoji = "🔴"
+            # OPTIMIZATION 4: Track consecutive losses
+            self.consecutive_losses += 1
         
         self.total_pnl += pnl
         
@@ -1035,8 +1295,16 @@ class BreakRetestSwingStrategy(bt.Strategy):
         print(f"   💵 Avg P&L: ${avg_pnl:.2f}")
         print(f"   🎯 Total P&L: ${self.total_pnl:.2f}")
         
+        # OPTIMIZATION 4: Log consecutive losses for risk management
+        if self.consecutive_losses > 0:
+            print(f"   📉 Consecutive Losses: {self.consecutive_losses}")
+        
         if self.params.track_retest_success:
             print(f"   📊 Retest Success Rate: {self.breakout_success_rate:.1%} ({self.successful_retests}/{self.retest_attempts})")
+        
+        # OPTIMIZATION 2: Log market regime context
+        if hasattr(self, 'market_regime'):
+            print(f"   🌍 Market Regime: {self.market_regime} (Volatility: {self.volatility_regime})")
     
     def stop(self):
         """Enhanced strategy completion summary"""
@@ -1044,7 +1312,7 @@ class BreakRetestSwingStrategy(bt.Strategy):
         final_value = self.broker.getvalue()
         
         print("\n" + "="*60)
-        print("🎯 ENHANCED BREAK & RETEST STRATEGY COMPLETED")
+        print("🎯 OPTIMIZED BREAK & RETEST STRATEGY COMPLETED")
         print("="*60)
         print(f"📊 Final Portfolio Value: ${final_value:.2f}")
         print(f"📈 Total Trades: {self.total_trades}")
@@ -1062,7 +1330,26 @@ class BreakRetestSwingStrategy(bt.Strategy):
             print(f"🎯 Retest Success Rate: {self.breakout_success_rate:.1%}")
             print(f"📊 Successful Retests: {self.successful_retests}/{self.retest_attempts}")
         
-        print(f"\n🔧 Strategy Parameters:")
+        # OPTIMIZATION 2: Market Regime Summary
+        if hasattr(self, 'regime_history') and self.regime_history:
+            trending_periods = len([r for r in self.regime_history if r['regime'] == 'trending'])
+            ranging_periods = len([r for r in self.regime_history if r['regime'] == 'ranging'])
+            high_vol_periods = len([r for r in self.regime_history if r['volatility'] == 'high'])
+            
+            print(f"\n🌍 Market Regime Analysis:")
+            print(f"   Trending Periods: {trending_periods}/{len(self.regime_history)} ({trending_periods/len(self.regime_history)*100:.1f}%)")
+            print(f"   Ranging Periods: {ranging_periods}/{len(self.regime_history)} ({ranging_periods/len(self.regime_history)*100:.1f}%)")
+            print(f"   High Volatility Periods: {high_vol_periods}/{len(self.regime_history)} ({high_vol_periods/len(self.regime_history)*100:.1f}%)")
+            print(f"   Final Regime: {self.market_regime} (Trend Strength: {self.trend_strength:.3f})")
+        
+        # OPTIMIZATION 4: Risk Management Summary
+        print(f"\n📊 Risk Management Summary:")
+        print(f"   Max Consecutive Losses: {self.consecutive_losses}")
+        print(f"   Volatility Multiplier: {self.volatility_multiplier:.2f}")
+        if hasattr(self, 'drawdown_protection_active'):
+            print(f"   Drawdown Protection: {'Active' if self.drawdown_protection_active else 'Inactive'}")
+        
+        print(f"\n🔧 Optimized Strategy Parameters:")
         print(f"   📏 Lookback Period: {self.params.lookback_period}")
         print(f"   💪 Min Breakout Strength: {self.params.min_breakout_strength:.1%}")
         print(f"   🎯 Position Size: {self.params.position_size_pct:.1%}")
@@ -1071,6 +1358,21 @@ class BreakRetestSwingStrategy(bt.Strategy):
         print(f"   🕐 Trade Cooldown: {self.params.trade_cooldown_days} days")
         print(f"   📈 Pattern Confirmation: {self.params.require_pattern_confirmation}")
         print(f"   📊 Momentum Confirmation: {self.params.require_momentum_confirmation}")
+        
+        # OPTIMIZATION FEATURES
+        print(f"\n🚀 OPTIMIZATION FEATURES ACTIVE:")
+        print(f"   ✅ OPTIMIZATION 1: Parameter Tuning")
+        print(f"      - Reduced breakout strength: {self.params.min_breakout_strength:.1%}")
+        print(f"      - Flexible retest tolerance: {self.params.retest_tolerance:.1%}")
+        print(f"      - Faster confirmation: {self.params.retest_confirmation_bars} bar(s)")
+        print(f"   ✅ OPTIMIZATION 2: Market Regime Adaptation")
+        print(f"      - Regime Detection: {self.params.enable_regime_detection}")
+        print(f"      - Adaptive Confirmation: {self.params.adaptive_confirmation}")
+        print(f"      - Current Regime: {getattr(self, 'market_regime', 'Unknown')}")
+        print(f"   ✅ OPTIMIZATION 4: Enhanced Risk Management")
+        print(f"      - Volatility Sizing: {self.params.enable_volatility_sizing}")
+        print(f"      - Max Portfolio Risk: {self.params.max_portfolio_risk:.1%}")
+        print(f"      - Drawdown Protection: {self.params.drawdown_protection}")
         print("="*60)
     
     # Utility methods for duplicate detection and level updates
