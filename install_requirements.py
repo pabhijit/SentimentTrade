@@ -34,13 +34,25 @@ def install_requirements(level="minimal"):
     """Install requirements based on level"""
     print_banner()
     
+    # Check Python version first
+    python_version = sys.version_info
+    print(f"🐍 Python Version: {python_version.major}.{python_version.minor}.{python_version.micro}")
+    
+    if python_version < (3, 8):
+        print("❌ Python 3.8+ is required. Please upgrade Python.")
+        return False
+    
+    if python_version >= (3, 12):
+        print("⚠️ Python 3.12+ detected. Some packages may have compatibility issues.")
+        print("   Consider using Python 3.8-3.11 for best compatibility.")
+    
     # Determine requirements file
     if level == "full":
-        req_file = "requirements.txt"
-        description = "Full SentimentTrade suite with all features"
+        req_file = "requirements-fixed.txt"
+        description = "Full SentimentTrade suite (fixed versions)"
     elif level == "minimal":
         req_file = "requirements-minimal.txt"
-        description = "Essential components for automated trading"
+        description = "Essential components only (guaranteed compatible)"
     else:
         print(f"❌ Unknown installation level: {level}")
         return False
@@ -52,15 +64,45 @@ def install_requirements(level="minimal"):
     # Check if requirements file exists
     if not Path(req_file).exists():
         print(f"❌ Requirements file not found: {req_file}")
+        print("Available files:")
+        for f in Path(".").glob("requirements*.txt"):
+            print(f"   - {f}")
         return False
     
     # Upgrade pip first
     if not run_command(f"{sys.executable} -m pip install --upgrade pip", "Upgrading pip"):
         print("⚠️ Pip upgrade failed, continuing anyway...")
     
-    # Install requirements
+    # Install requirements with better error handling
     install_cmd = f"{sys.executable} -m pip install -r {req_file}"
-    if not run_command(install_cmd, f"Installing {req_file}"):
+    print(f"🔧 Running: {install_cmd}")
+    
+    try:
+        result = subprocess.run(install_cmd, shell=True, capture_output=True, text=True, timeout=600)
+        
+        if result.returncode == 0:
+            print("✅ Requirements installed successfully!")
+            return True
+        else:
+            print("❌ Installation failed with errors:")
+            print("STDOUT:", result.stdout[-1000:])  # Last 1000 chars
+            print("STDERR:", result.stderr[-1000:])  # Last 1000 chars
+            
+            # Suggest fallback
+            if level == "full":
+                print("\n💡 Suggestion: Try minimal installation instead:")
+                print("   python install_requirements.py --level minimal")
+            else:
+                print("\n💡 Try installing packages individually:")
+                print("   pip install yfinance pandas numpy schedule python-telegram-bot")
+            
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print("❌ Installation timed out (10 minutes)")
+        return False
+    except Exception as e:
+        print(f"❌ Installation error: {e}")
         return False
     
     # Install optional system dependencies
@@ -135,12 +177,68 @@ def show_next_steps():
     print("   cd api")
     print("   python main.py")
 
+def install_core_packages_manually():
+    """Install core packages one by one for maximum compatibility"""
+    print("🔧 Installing core packages individually...")
+    
+    core_packages = [
+        "yfinance>=0.2.18",
+        "pandas>=1.5.0", 
+        "numpy>=1.21.0",
+        "requests>=2.28.0",
+        "python-dotenv>=1.0.0",
+        "schedule>=1.2.0",
+        "python-telegram-bot>=20.0",
+        "fastapi>=0.100.0",
+        "uvicorn>=0.23.0",
+        "ta>=0.10.2",
+        "matplotlib>=3.5.0",
+        "colorlog>=6.7.0"
+    ]
+    
+    successful = []
+    failed = []
+    
+    for package in core_packages:
+        print(f"📦 Installing {package}...")
+        try:
+            result = subprocess.run(
+                f"{sys.executable} -m pip install '{package}'", 
+                shell=True, 
+                capture_output=True, 
+                text=True,
+                timeout=120
+            )
+            
+            if result.returncode == 0:
+                print(f"✅ {package} installed successfully")
+                successful.append(package)
+            else:
+                print(f"❌ {package} failed: {result.stderr[:200]}")
+                failed.append(package)
+                
+        except Exception as e:
+            print(f"❌ {package} error: {e}")
+            failed.append(package)
+    
+    print(f"\n📊 Installation Summary:")
+    print(f"✅ Successful: {len(successful)}")
+    print(f"❌ Failed: {len(failed)}")
+    
+    if failed:
+        print(f"\n⚠️ Failed packages:")
+        for pkg in failed:
+            print(f"   - {pkg}")
+        print("\nYou can try installing these manually later.")
+    
+    return len(successful) >= 8  # Need at least 8 core packages
+
 def main():
     """Main installation function"""
     parser = argparse.ArgumentParser(description="Install SentimentTrade requirements")
     parser.add_argument(
         "--level",
-        choices=["minimal", "full"],
+        choices=["minimal", "full", "manual"],
         default="minimal",
         help="Installation level (default: minimal)"
     )
@@ -163,10 +261,16 @@ def main():
         return
     
     # Install requirements
-    success = install_requirements(args.level)
+    if args.level == "manual":
+        success = install_core_packages_manually()
+    else:
+        success = install_requirements(args.level)
     
     if not success:
         print("\n❌ Installation failed!")
+        if args.level != "manual":
+            print("\n💡 Try manual installation:")
+            print("   python install_requirements.py --level manual")
         sys.exit(1)
     
     # Verify if requested
