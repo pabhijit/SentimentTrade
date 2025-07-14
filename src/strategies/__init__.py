@@ -21,6 +21,7 @@ from .default_strategy import DefaultStrategy
 from .momentum_strategy import MomentumStrategy
 from .mean_reversion_strategy import MeanReversionStrategy
 from .mechanical_options_strategy import MechanicalOptionsStrategy
+from .break_retest_strategy import BreakRetestSwingStrategy
 
 # === Strategy Management ===
 from .strategy_factory import (
@@ -32,13 +33,6 @@ from .strategy_factory import (
     get_strategy_recommendations
 )
 
-# === Break & Retest Strategy (if available) ===
-try:
-    from .break_retest_strategy import BreakRetestSwingStrategy
-    _BREAK_RETEST_AVAILABLE = True
-except ImportError:
-    _BREAK_RETEST_AVAILABLE = False
-
 # === Package Exports ===
 __all__ = [
     # Strategy Classes
@@ -47,6 +41,7 @@ __all__ = [
     'MeanReversionStrategy',
     'MechanicalOptionsStrategy',
     'BaseStrategy',
+    'BreakRetestSwingStrategy',
     
     # Factory and Management
     'StrategyFactory', 
@@ -57,10 +52,6 @@ __all__ = [
     'create_strategy',
     'get_strategy_recommendations',
 ]
-
-# Add break & retest strategy if available
-if _BREAK_RETEST_AVAILABLE:
-    __all__.append('BreakRetestSwingStrategy')
 
 # === Package Metadata ===
 __package_name__ = "SentimentTrade Strategies"
@@ -101,17 +92,15 @@ __available_strategies__ = {
         'nickname': 'The Enhanced Pelosi Special',
         'win_rate': '91-96%+',
         'historical_return': '705% over 5 years'
-    }
-}
-
-if _BREAK_RETEST_AVAILABLE:
-    __available_strategies__['break_retest'] = {
+    },
+    'break_retest': {
         'class': 'BreakRetestSwingStrategy',
         'type': 'swing_trading',
         'risk_level': 'medium_high',
         'asset_class': 'stocks',
         'description': 'Enhanced support/resistance breakout and retest strategy'
     }
+}
 
 # === Quick Access Functions ===
 def list_strategies():
