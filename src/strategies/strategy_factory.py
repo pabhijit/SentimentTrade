@@ -683,7 +683,8 @@ class MechanicalOptionsStrategy(BaseStrategy):
                 strategy_name=self.name,
                 reasoning=f"Analysis error: {str(e)}"
             )
-    """Clean strategy factory for creating and managing strategies"""
+
+class StrategyFactory:
     
     def __init__(self):
         self._strategies = {
