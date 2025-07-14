@@ -30,7 +30,7 @@ sys.path.insert(0, str(project_root / 'src'))
 from config import config
 from logger import logger
 from telegram_alerts import TelegramNotifier, send_bot_status, send_error_alert
-from strategies.enhanced_break_retest_strategy import EnhancedBreakRetestStrategy
+from strategies.break_retest_strategy import BreakRetestSwingStrategy
 from strategies.options_break_retest_strategy import OptionsBreakRetestStrategy
 from data.data_downloader import download_stock_data
 import yfinance as yf
@@ -57,7 +57,7 @@ class DailyStrategyRunner:
         
         # Strategy class mapping
         self.strategy_classes = {
-            'enhanced_break_retest': 'EnhancedBreakRetestStrategy',
+            'enhanced_break_retest': 'BreakRetestSwingStrategy',
             'options_break_retest': 'OptionsBreakRetestStrategy', 
             'default_strategy': 'DefaultStrategy',
             'mean_reversion': 'MeanReversionStrategy',
@@ -163,8 +163,8 @@ class DailyStrategyRunner:
             params = config.get('parameters', {})
             
             if strategy_name == 'enhanced_break_retest':
-                from strategies.enhanced_break_retest_strategy import EnhancedBreakRetestStrategy
-                return EnhancedBreakRetestStrategy(
+                from strategies.break_retest_strategy import BreakRetestSwingStrategy
+                return BreakRetestSwingStrategy(
                     lookback_period=params.get('lookback_period', 20),
                     min_breakout_strength=params.get('min_breakout_strength', 0.008),
                     position_size=params.get('position_size', 0.03),
@@ -177,8 +177,8 @@ class DailyStrategyRunner:
             
             elif strategy_name == 'options_break_retest':
                 from strategies.options_break_retest_strategy import OptionsBreakRetestStrategy
-                from strategies.enhanced_break_retest_strategy import EnhancedBreakRetestStrategy
-                base_strategy = EnhancedBreakRetestStrategy()
+                from strategies.break_retest_strategy import BreakRetestSwingStrategy
+                base_strategy = BreakRetestSwingStrategy()
                 return OptionsBreakRetestStrategy(
                     base_strategy=base_strategy,
                     target_delta_range=params.get('target_delta_range', (0.6, 0.8)),
