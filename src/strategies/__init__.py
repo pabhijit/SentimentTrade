@@ -30,7 +30,7 @@ from .strategy_factory import (
     strategy_factory, 
     get_available_strategies, 
     create_strategy, 
-    get_strategy_recommendations
+    analyze_symbol
 )
 
 # === Package Exports ===
