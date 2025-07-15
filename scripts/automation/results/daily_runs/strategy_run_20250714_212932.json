@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-07-14T21:29:32.195015",
+  "run_id": 1,
+  "total_signals": 5,
+  "actionable_signals": 2,
+  "strategies": {
+    "default": {
+      "total": 3,
+      "actionable": 1,
+      "signals": [
+        {
+          "symbol": "AAPL",
+          "action": "BUY",
+          "confidence": 0.75,
+          "current_price": 150.25,
+          "entry_price": 150.25,
+          "stop_loss": 142.74,
+          "target_price": 172.79,
+          "risk_reward_ratio": 2.15,
+          "strategy": "Default Strategy",
+          "reasoning": "Technical analysis shows BUY signal...",
+          "timestamp": "2025-07-14T21:29:32.195019"
+        }
+      ]
+    }
+  },
+  "execution_time_seconds": 1.5
+}
